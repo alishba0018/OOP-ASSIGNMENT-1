@@ -1,0 +1,148 @@
+#include<iostream>
+#include<tuple>
+using namespace std;
+
+class Robot {
+    private:
+        string name;
+        int hits;
+
+    public:
+        Robot() : name("unknown"), hits(0) {}
+        Robot(string n) : name(n), hits(0) {}
+
+        void hitBall(int &ballX, int &ballY, const string &direction) {
+            if (direction == "up") {
+                ballY++;
+            } else if (direction == "down") {
+                ballY--;
+            } else if (direction == "right") {
+                ballX++;
+            } else if (direction == "left") {
+                ballX--;
+            }
+            hits++;
+        }
+
+        int getHits() const {
+            return hits;
+        }
+};
+
+class Ball {
+    private:
+        int x, y;
+
+    public:
+        Ball() : x(0), y(0) {}
+        Ball(int a, int b) : x(a), y(b) {}
+
+        int getX() const { return x; }
+        int getY() const { return y; }
+
+        void move(int dx, int dy) {
+            x += dx;
+            y += dy;
+        }
+
+        tuple<int, int> getPosition() const {
+            return make_tuple(x, y);
+        }
+};
+
+class Goal {
+    private:
+        int x, y;
+
+    public:
+        Goal() : x(3), y(3) {}
+
+        bool isGoalReached(int ballX, int ballY) const {
+            return (ballX == x && ballY == y);
+        }
+};
+
+class Team {
+    private:
+        string teamName;
+        Robot *robot;
+
+    public:
+        Team(string n, Robot *r) : teamName(n), robot(r) {}
+
+        Robot* getRobot() const {
+            return robot;
+        }
+
+        string getTeamName() const {
+            return teamName;
+        }
+};
+
+class Game {
+    private:
+        Team *team1, *team2;
+        Ball ball;
+        Goal goal;
+
+    public:
+        Game(Team *t1, Team *t2) : team1(t1), team2(t2) {}
+
+        void resetBall() {
+            ball = Ball(0, 0);
+        }
+
+        void play(Team *t) {
+            Robot* robot = t->getRobot();
+            cout << "Team " << t->getTeamName() << " is playing now!\n";
+
+            while (!goal.isGoalReached(ball.getX(), ball.getY())) {
+                string dir;
+                cout << "Enter direction to hit ball (up/down/right/left): ";
+                cin >> dir;
+                
+                if (dir != "up" && dir != "down" && dir != "right" && dir != "left") {
+                    cout << "Invalid direction!\n";
+                    continue;
+                }
+
+                int ballX = ball.getX(), ballY = ball.getY();
+                robot->hitBall(ballX, ballY, dir);
+                ball.move(ballX - ball.getX(), ballY - ball.getY());
+                cout << "Ball position: (" << ball.getX() << ", " << ball.getY() << ")\n";
+            }
+            cout << "Team " << t->getTeamName() << " reached the goal in " << robot->getHits() << " hits.\n";
+        }
+
+        void declareWinner() const {
+            int hits1 = team1->getRobot()->getHits();
+            int hits2 = team2->getRobot()->getHits();
+
+            cout << team1->getTeamName() << " hits: " << hits1 << endl;
+            cout << team2->getTeamName() << " hits: " << hits2 << endl;
+
+            if (hits1 < hits2) {
+                cout << "Team " << team1->getTeamName() << " wins the game!\n";
+            } else if (hits1 > hits2) {
+                cout << "Team " << team2->getTeamName() << " wins the game!\n";
+            } else {
+                cout << "It's a tie!\n";
+            }
+        }
+
+        void startGame() {
+            cout << "Game has started!\n";
+            play(team1);
+            resetBall();
+            play(team2);
+            declareWinner();
+        }
+};
+
+int main() {
+    Robot robot1("Robo1"), robot2("Robo2");
+    Team team1("Alpha", &robot1), team2("Delta", &robot2);
+    Game game(&team1, &team2);
+    game.startGame();
+    return 0;
+}
