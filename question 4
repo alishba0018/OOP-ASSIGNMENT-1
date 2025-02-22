@@ -1,0 +1,206 @@
+#include <iostream>
+using namespace std;
+
+class Student {
+private:
+    const string studentId;
+    string cardId;
+    string name;
+    string stop;
+    bool isFeePaid;
+
+public:
+    Student(string id, string carId, string n, string stop, bool paid = false)
+        : studentId(id), cardId(carId), name(n), stop(stop), isFeePaid(paid) {}
+
+    void payFee() {
+        isFeePaid = true;
+    }
+
+    string getStop() const {
+        return stop;
+    }
+
+    bool checkIsFeePaid() const {
+        return isFeePaid;
+    }
+
+    string getStudentID() const {
+        return studentId;
+    }
+
+    void displayStudent() const {
+        cout << "Student ID: " << studentId << endl;
+        cout << "Name: " << name << endl;
+        cout << "Card ID: " << cardId << endl;
+        cout << "Stop: " << stop << endl;
+    }
+};
+
+class Stop {
+private:
+    string stopName;
+    Student** assignedStudents;
+    int studentCount;
+    int studentCapacity;
+
+public:
+    Stop(string n) : stopName(n), studentCount(0), studentCapacity(1) {
+        assignedStudents = new Student*[studentCapacity];
+    }
+
+    ~Stop() {
+        delete[] assignedStudents;
+    }
+
+    void expandStudent() {
+        studentCapacity *= 2;
+        Student** students = new Student*[studentCapacity];
+        for (int i = 0; i < studentCount; i++) {
+            students[i] = assignedStudents[i];
+        }
+        delete[] assignedStudents;
+        assignedStudents = students;
+    }
+
+    void assignStudent(Student* s) {
+        if (studentCount == studentCapacity) {
+            expandStudent();
+        }
+        assignedStudents[studentCount++] = s;
+    }
+
+    string getStopName() const {
+        return stopName;
+    }
+};
+
+class Route {
+private:
+    string routeId;
+    Stop** stops;
+    int stopCount;
+    int stopCapacity;
+
+public:
+    Route(string id) : routeId(id), stopCount(0), stopCapacity(1) {
+        stops = new Stop*[stopCapacity];
+    }
+
+    ~Route() {
+        delete[] stops;
+    }
+
+    void expandRoute() {
+        stopCapacity *= 2;
+        Stop** newStops = new Stop*[stopCapacity];
+        for (int i = 0; i < stopCount; i++) {
+            newStops[i] = stops[i];
+        }
+        delete[] stops;
+        stops = newStops;
+    }
+
+    void addStop(Stop* s) {
+        if (stopCount == stopCapacity) {
+            expandRoute();
+        }
+        stops[stopCount++] = s;
+    }
+
+    Stop** getStops() {
+        return stops;
+    }
+
+    int getStopCount() const {
+        return stopCount;
+    }
+};
+
+class Bus {
+private:
+    string busID;
+    Route& route;
+    Student** assignedStudents;
+    int studentCount;
+    int studentCapacity;
+
+public:
+    Bus(string id, Route& r) : busID(id), route(r), studentCount(0), studentCapacity(1) {
+        assignedStudents = new Student*[studentCapacity];
+    }
+
+    ~Bus() {
+        delete[] assignedStudents;
+    }
+
+    void expandStudent() {
+        studentCapacity *= 2;
+        Student** students = new Student*[studentCapacity];
+        for (int i = 0; i < studentCount; i++) {
+            students[i] = assignedStudents[i];
+        }
+        delete[] assignedStudents;
+        assignedStudents = students;
+    }
+
+    void assignStudentToBus(Student* s) {
+        for (int i = 0; i < route.getStopCount(); i++) {
+            if (route.getStops()[i]->getStopName() == s->getStop()) {
+                if (studentCount == studentCapacity) {
+                    expandStudent();
+                }
+                assignedStudents[studentCount++] = s;
+                cout << "Student " << s->getStudentID() << " assigned to Bus " << busID << " at Stop " << s->getStop() << endl;
+                return;
+            }
+        }
+        cout << "No matching student found for bus assignment.\n";
+    }
+
+    void displayStudentsAssignedToBus() const {
+        for (int i = 0; i < studentCount; i++) {
+            assignedStudents[i]->displayStudent();
+        }
+    }
+};
+
+int main() {
+    Stop* stop1 = new Stop("Stop A");
+    Stop* stop2 = new Stop("Stop B");
+    Stop* stop3 = new Stop("Stop C");
+
+    Route route1("Route 101");
+    route1.addStop(stop1);
+    route1.addStop(stop2);
+    route1.addStop(stop3);
+
+    Bus bus1("Bus 001", route1);
+
+    Student* student1 = new Student("S1", "C101", "Alice", "Stop A");
+    Student* student2 = new Student("S2", "C102", "Bob", "Stop B");
+    Student* student3 = new Student("S3", "C103", "Charlie", "Stop C");
+    Student* student4 = new Student("S4", "C104", "David", "Stop A");
+
+    stop1->assignStudent(student1);
+    stop2->assignStudent(student2);
+    stop3->assignStudent(student3);
+    stop1->assignStudent(student4);
+
+    bus1.assignStudentToBus(student1);
+    bus1.assignStudentToBus(student2);
+    bus1.assignStudentToBus(student3);
+    bus1.assignStudentToBus(student4);
+
+    bus1.displayStudentsAssignedToBus();
+
+    delete student1;
+    delete student2;
+    delete student3;
+    delete student4;
+    delete stop1;
+    delete stop2;
+    delete stop3;
+
+    return 0;
+}
