@@ -1,0 +1,188 @@
+#include <iostream>
+using namespace std;
+
+class Vehicle {
+private:
+    string brand;
+    string model;
+    float rentalPrice;
+    string requiredLicense;
+
+public:
+    Vehicle() : brand("Unknown"), model("Unknown"), rentalPrice(0.0), requiredLicense("Not Provided") {}
+
+    Vehicle(string b, string m, float price, string req)
+        : brand(b), model(m), rentalPrice(price), requiredLicense(req) {}
+
+    bool isEligible(const string &userLicense) const {
+        if (userLicense == "Full") return true;
+        if (userLicense == "Intermediate" && requiredLicense != "Full") return true;
+        if (userLicense == "Learner" && requiredLicense == "Learner") return true;
+        return false;
+    }
+
+    string getModel() const { return model; }
+    float getRentalPrice() const { return rentalPrice; }
+
+    void displayVehicle() const {
+        cout << "Brand: " << brand << endl;
+        cout << "Model: " << model << endl;
+        cout << "Rental Price per Day: $" << rentalPrice << endl;
+        cout << "Required License: " << requiredLicense << endl;
+    }
+};
+
+class User {
+private:
+    int userId;
+    string name;
+    int age;
+    string contactNumber;
+    string licenseType;
+
+public:
+    User() : userId(0), name("Unknown"), age(0), contactNumber("Not Provided"), licenseType("Not Given") {}
+
+    User(int id, string n, int a, string number, string license)
+        : userId(id), name(n), age(a), contactNumber(number), licenseType(license) {}
+
+    void updateLicenseType(string l) { licenseType = l; }
+    void updateName(string n) { name = n; }
+    void updateAge(int a) { age = a; }
+    void updateContactNumber(string number) { contactNumber = number; }
+
+    int getUserId() const { return userId; }
+    string getLicenseType() const { return licenseType; }
+    string getName() const { return name; }
+
+    void displayUser() const {
+        cout << "User ID: " << userId << endl;
+        cout << "Name: " << name << endl;
+        cout << "Age: " << age << endl;
+        cout << "Contact Number: " << contactNumber << endl;
+        cout << "License Type: " << licenseType << endl;
+    }
+};
+
+class RentalSystem {
+private:
+    User **users;
+    Vehicle **vehicles;
+    int userCount;
+    int vehicleCount;
+    int userCapacity;
+    int vehicleCapacity;
+
+public:
+    RentalSystem() : userCount(0), vehicleCount(0), userCapacity(1), vehicleCapacity(1) {
+        users = new User *[userCapacity];
+        vehicles = new Vehicle *[vehicleCapacity];
+    }
+
+    ~RentalSystem() {
+        for (int i = 0; i < userCount; i++) delete users[i];
+        for (int i = 0; i < vehicleCount; i++) delete vehicles[i];
+        delete[] users;
+        delete[] vehicles;
+    }
+
+    void expandUsers() {
+        userCapacity *= 2;
+        User **newUsers = new User *[userCapacity];
+        for (int i = 0; i < userCount; i++) newUsers[i] = users[i];
+        delete[] users;
+        users = newUsers;
+    }
+
+    void expandVehicles() {
+        vehicleCapacity *= 2;
+        Vehicle **newVehicles = new Vehicle *[vehicleCapacity];
+        for (int i = 0; i < vehicleCount; i++) newVehicles[i] = vehicles[i];
+        delete[] vehicles;
+        vehicles = newVehicles;
+    }
+
+    void registerUser(int id, string name, int age, string number, string license) {
+        if (userCount == userCapacity) expandUsers();
+        users[userCount++] = new User(id, name, age, number, license);
+        cout << "User registered successfully!\n";
+    }
+
+    void addVehicle(string brand, string model, float price, string req) {
+        if (vehicleCount == vehicleCapacity) expandVehicles();
+        vehicles[vehicleCount++] = new Vehicle(brand, model, price, req);
+        cout << "Vehicle added successfully!\n";
+    }
+
+    void rentVehicle(int userId, string vehicleModel) {
+        User *user = nullptr;
+        Vehicle *selectedVehicle = nullptr;
+
+        for (int i = 0; i < userCount; i++) {
+            if (users[i]->getUserId() == userId) {
+                user = users[i];
+                break;
+            }
+        }
+
+        if (!user) {
+            cout << "User not found!\n";
+            return;
+        }
+
+        for (int i = 0; i < vehicleCount; i++) {
+            if (vehicles[i]->getModel() == vehicleModel) {
+                selectedVehicle = vehicles[i];
+                break;
+            }
+        }
+
+        if (!selectedVehicle) {
+            cout << "Vehicle not found!\n";
+            return;
+        }
+
+        if (selectedVehicle->isEligible(user->getLicenseType())) {
+            cout << "Rental Successful! " << user->getName() << " rented " << selectedVehicle->getModel()
+                 << " for $" << selectedVehicle->getRentalPrice() << " per day.\n";
+        } else {
+            cout << "Rental Failed! You are not eligible to rent this vehicle.\n";
+        }
+    }
+
+    void displayUsers() const {
+        for (int i = 0; i < userCount; i++) {
+            cout << "User " << i + 1 << ":\n";
+            users[i]->displayUser();
+        }
+    }
+
+    void displayVehicles() const {
+        for (int i = 0; i < vehicleCount; i++) {
+            cout << "Vehicle " << i + 1 << ":\n";
+            vehicles[i]->displayVehicle();
+        }
+    }
+};
+
+int main() {
+    RentalSystem rentalSystem;
+
+    rentalSystem.registerUser(1, "Alice", 25, "123-456", "Full");
+    rentalSystem.registerUser(2, "Bob", 18, "789-101", "Learner");
+    rentalSystem.registerUser(3, "Charlie", 21, "555-888", "Intermediate");
+    rentalSystem.displayUsers();
+
+    rentalSystem.addVehicle("Toyota", "Camry", 50.0, "Full");
+    rentalSystem.addVehicle("Honda", "Civic", 45.0, "Intermediate");
+    rentalSystem.addVehicle("Yamaha", "Scooter", 20.0, "Learner");
+    rentalSystem.displayVehicles();
+
+    rentalSystem.rentVehicle(1, "Camry");
+    rentalSystem.rentVehicle(2, "Camry");
+    rentalSystem.rentVehicle(3, "Civic");
+    rentalSystem.rentVehicle(2, "Scooter");
+    rentalSystem.rentVehicle(3, "Camry");
+
+    return 0;
+}
