@@ -1,0 +1,163 @@
+#include <iostream>
+using namespace std;
+
+class Skill {
+private:
+    int skillID;
+    string name;
+    string description;
+
+public:
+    Skill() : skillID(0), name("Unknown Skill"), description("None") {}
+    Skill(int id, string skillName, string desc) : skillID(id), name(skillName), description(desc) {}
+
+    int getSkillId() const { return skillID; }
+
+    void displaySkillDetails() const {
+        cout << "Skill Details\n";
+        cout << "Skill ID: " << skillID << endl;
+        cout << "Name: " << name << endl;
+        cout << "Description: " << description << endl;
+    }
+
+    void updateDescription(const string& newDescription) { description = newDescription; }
+};
+
+class Sports {
+private:
+    int sportID;
+    string name;
+    string description;
+    Skill requiredSkills[2];
+    int skillCount = 0;
+
+public:
+    Sports() : sportID(0), name("Unknown Sport"), description("None") {}
+    Sports(int id, string sportName, string desc) : sportID(id), name(sportName), description(desc) {}
+
+    void addSkill(const Skill& skill) {
+        if (skillCount < 2) {
+            requiredSkills[skillCount++] = skill;
+        } else {
+            cout << "Maximum number of skills already added!\n";
+        }
+    }
+
+    void displayDetails() const {
+        cout << "Sports Details\n";
+        cout << "Sport ID: " << sportID << endl;
+        cout << "Name: " << name << endl;
+        cout << "Description: " << description << endl;
+    }
+};
+
+class Mentor;
+
+class Student {
+private:
+    int studentID;
+    string name;
+    int age;
+    Sports sportsInterests[2];
+    Mentor* assignedMentor = nullptr;
+    int sportCount = 0;
+
+public:
+    Student() : studentID(0), name("Unknown Student"), age(0) {}
+    Student(int id, string studentName, int studentAge) : studentID(id), name(studentName), age(studentAge) {}
+
+    void addSportInterest(const Sports& sport) {
+        if (sportCount < 2) {
+            sportsInterests[sportCount++] = sport;
+        } else {
+            cout << "Maximum number of sports interests reached!\n";
+        }
+    }
+
+    void displayDetails() const {
+        cout << "Student Details\n";
+        cout << "Student ID: " << studentID << endl;
+        cout << "Name: " << name << endl;
+        cout << "Age: " << age << endl;
+        for (int i = 0; i < sportCount; i++) {
+            sportsInterests[i].displayDetails();
+        }
+    }
+
+    void registerWithMentor(Mentor& mentor);
+    void viewMentorDetails() const;
+};
+
+class Mentor {
+private:
+    int mentorID;
+    string name;
+    int maxStudents;
+    Student* assignedStudents;
+    int studentCount = 0;
+
+public:
+    Mentor() : mentorID(0), name("Unknown Mentor"), maxStudents(3) { assignedStudents = new Student[maxStudents]; }
+    Mentor(int id, string mentorName, int max) : mentorID(id), name(mentorName), maxStudents(max) { assignedStudents = new Student[max]; }
+
+    void assignStudent(Student& student) {
+        if (studentCount < maxStudents) {
+            assignedStudents[studentCount++] = student;
+        } else {
+            cout << "Cannot assign more students, limit reached!\n";
+        }
+    }
+
+    void displayDetails() const {
+        cout << "Mentor Details\n";
+        cout << "Mentor ID: " << mentorID << endl;
+        cout << "Name: " << name << endl;
+    }
+
+    void listStudents() const {
+        cout << "Mentor: " << name << "\nAssigned Students:\n";
+        for (int i = 0; i < studentCount; i++) {
+            assignedStudents[i].displayDetails();
+        }
+    }
+
+    ~Mentor() { delete[] assignedStudents; }
+};
+
+void Student::registerWithMentor(Mentor& mentor) {
+    assignedMentor = &mentor;
+    mentor.assignStudent(*this);
+}
+
+void Student::viewMentorDetails() const {
+    if (assignedMentor) {
+        assignedMentor->displayDetails();
+    } else {
+        cout << "No mentor assigned yet!\n";
+    }
+}
+
+int main() {
+    Skill dribbling(1, "Dribbling", "Control the ball while moving.");
+    Skill shooting(2, "Shooting", "Accurately shoot the ball.");
+    
+    Sports basketball(101, "Basketball", "A team sport with a hoop.");
+    basketball.addSkill(dribbling);
+    basketball.addSkill(shooting);
+    
+    Student alice(201, "Alice", 18);
+    Student bob(202, "Bob", 20);
+    
+    alice.addSportInterest(basketball);
+    bob.addSportInterest(basketball);
+    
+    Mentor coach(301, "Coach Carter", 3);
+    alice.registerWithMentor(coach);
+    bob.registerWithMentor(coach);
+    
+    cout << "\n=== Mentor Details ===\n";
+    coach.displayDetails();
+    coach.listStudents();
+    
+    return 0;
+}
